@@ -4,8 +4,18 @@ import SearchBar from '../components/SearchBar';
 import { searchBooks } from '../services/booksApi';
 import { Book } from '../types/book';
 
-export default function SearchPage() {
-  const [query, setQuery] = useState('');
+interface SearchPageProps {
+  wishlist: Book[];
+  onToggleWishlist: (book: Book) => Promise<void>;
+  activeWishlistBookId: string | null;
+}
+
+export default function SearchPage({
+  wishlist,
+  onToggleWishlist,
+  activeWishlistBookId,
+}: SearchPageProps) {
+  const [query, setQuery] = useState('atomic habits');
   const [books, setBooks] = useState<Book[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +47,11 @@ export default function SearchPage() {
       setIsLoading(false);
     }
   }
+
+  const wishlistIds = useMemo(
+    () => new Set(wishlist.map((book) => book.googleBookId)),
+    [wishlist]
+  );
 
   const content = useMemo(() => {
     if (isLoading) {
@@ -77,17 +92,22 @@ export default function SearchPage() {
           <BookCard
             key={book.googleBookId}
             book={book}
-            onToggleWishlist={(selectedBook) => {
-              console.log(
-                'Wishlist action will be implemented next:',
-                selectedBook
-              );
-            }}
+            isWishlisted={wishlistIds.has(book.googleBookId)}
+            isWishlistLoading={activeWishlistBookId === book.googleBookId}
+            onToggleWishlist={onToggleWishlist}
           />
         ))}
       </div>
     );
-  }, [books, errorMessage, hasSearched, isLoading]);
+  }, [
+    books,
+    errorMessage,
+    hasSearched,
+    isLoading,
+    wishlistIds,
+    onToggleWishlist,
+    activeWishlistBookId,
+  ]);
 
   return (
     <section className="space-y-6">
