@@ -3,7 +3,7 @@ interface StarRatingProps {
 }
 
 export default function StarRating({ rating }: StarRatingProps) {
-  const roundedRating = Math.round(rating);
+  const roundedRating = Math.floor(rating);
   const stars = Array.from({ length: 5 }, (_, index) => index < roundedRating);
 
   return (

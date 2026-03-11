@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: simple-book-mongodb
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: simple-books
+    volumes:
+      - mongodb_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+    container_name: simple-book-backend
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      MONGODB_URI: mongodb://mongodb:27017/simple-books
+      CLIENT_URL: http://localhost:5173
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: simple-book-frontend
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_BASE_URL: http://localhost:3001/api
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:

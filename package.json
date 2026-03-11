@@ -8,6 +8,8 @@
     "backend"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "echo \"Run frontend and backend separately\"",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
   }
 }
