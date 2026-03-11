@@ -1,67 +1,56 @@
 import BookCard from '../components/BookCard';
+import EmptyState from '../components/EmptyState';
 import { Book } from '../types/book';
 
 interface WishlistPageProps {
   wishlist: Book[];
-  onToggleWishlist: (book: Book) => Promise<void>;
-  activeWishlistBookId: string | null;
-  isInitialLoading: boolean;
-  errorMessage: string;
+  onRemove: (book: Book) => void;
+  deletingId: string;
 }
 
 export default function WishlistPage({
   wishlist,
-  onToggleWishlist,
-  activeWishlistBookId,
-  isInitialLoading,
-  errorMessage,
+  onRemove,
+  deletingId,
 }: WishlistPageProps) {
-  let content: React.ReactNode;
-
-  if (isInitialLoading) {
-    content = (
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-        Loading wishlist...
-      </div>
-    );
-  } else if (errorMessage) {
-    content = (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700 shadow-sm">
-        {errorMessage}
-      </div>
-    );
-  } else if (wishlist.length === 0) {
-    content = (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-        Your wishlist is empty. Search for books and save the ones you like.
-      </div>
-    );
-  } else {
-    content = (
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {wishlist.map((book) => (
-          <BookCard
-            key={book.googleBookId}
-            book={book}
-            isWishlisted
-            isWishlistLoading={activeWishlistBookId === book.googleBookId}
-            onToggleWishlist={onToggleWishlist}
-          />
-        ))}
-      </div>
+  if (wishlist.length === 0) {
+    return (
+      <EmptyState
+        title="Your wishlist is still empty"
+        description="Books you save from the search page will appear here."
+      />
     );
   }
 
   return (
     <section className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">My Wishlist</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Books saved to your personal reading wishlist.
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">
+          Saved books
+        </p>
+        <h2 className="mt-2 text-3xl font-bold text-slate-900">
+          Wishlist Collection
+        </h2>
+        <p className="mt-2 text-sm text-slate-500">
+          All books below are stored in MongoDB and can be managed from this
+          page.
         </p>
       </div>
 
-      {content}
+      <div className="grid gap-4 xl:grid-cols-2">
+        {wishlist.map((book) => (
+          <BookCard
+            key={book.googleBookId}
+            book={book}
+            isSaved
+            actionLabel={
+              deletingId === book.googleBookId ? 'Removing...' : 'Remove'
+            }
+            onAction={onRemove}
+            actionDisabled={deletingId === book.googleBookId}
+          />
+        ))}
+      </div>
     </section>
   );
 }

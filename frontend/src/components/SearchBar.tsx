@@ -1,41 +1,27 @@
-import { FormEvent } from 'react';
-
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
-  isLoading?: boolean;
 }
 
-export default function SearchBar({
-  value,
-  onChange,
-  onSubmit,
-  isLoading = false,
-}: SearchBarProps) {
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit();
-  }
-
+export default function SearchBar({ value, onChange }: SearchBarProps) {
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row">
+    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5">
+      <label
+        htmlFor="book-search"
+        className="mb-3 block text-sm font-semibold text-slate-700">
+        Search books by keyword
+      </label>
       <input
+        id="book-search"
         type="text"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Search by title, author, or keyword..."
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+        placeholder="Search by title..."
+        className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-50"
       />
-
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
-        {isLoading ? 'Searching...' : 'Search'}
-      </button>
-    </form>
+      <p className="mt-3 text-xs text-slate-500">
+        Search starts automatically when you type at least 2 characters.
+      </p>
+    </div>
   );
 }

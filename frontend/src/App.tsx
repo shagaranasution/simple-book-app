@@ -1,87 +1,89 @@
-import { useCallback, useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SearchPage from './pages/SearchPage';
 import WishlistPage from './pages/WishlistPage';
-import {
-  addWishlist,
-  getWishlist,
-  removeWishlist,
-} from './services/wishlistApi';
+import { getWishlist, removeWishlist } from './services/wishlistApi';
 import { Book } from './types/book';
 
-export default function App() {
+function App() {
   const [wishlist, setWishlist] = useState<Book[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [wishlistErrorMessage, setWishlistErrorMessage] = useState('');
-  const [activeWishlistBookId, setActiveWishlistBookId] = useState<
-    string | null
-  >(null);
-
-  const loadWishlist = useCallback(async () => {
-    try {
-      setWishlistErrorMessage('');
-      const data = await getWishlist();
-      setWishlist(data);
-    } catch (error) {
-      setWishlistErrorMessage(
-        error instanceof Error ? error.message : 'Failed to load wishlist'
-      );
-    } finally {
-      setIsInitialLoading(false);
-    }
-  }, []);
+  const [loadingWishlist, setLoadingWishlist] = useState(true);
+  const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState('');
 
   useEffect(() => {
-    void loadWishlist();
-  }, [loadWishlist]);
-
-  const handleToggleWishlist = useCallback(
-    async (book: Book) => {
+    async function loadWishlist() {
       try {
-        setActiveWishlistBookId(book.googleBookId);
-        setWishlistErrorMessage('');
-
-        const alreadyWishlisted = wishlist.some(
-          (wishlistBook) => wishlistBook.googleBookId === book.googleBookId
-        );
-
-        if (alreadyWishlisted) {
-          await removeWishlist(book.googleBookId);
-          setWishlist((prev) =>
-            prev.filter(
-              (wishlistBook) => wishlistBook.googleBookId !== book.googleBookId
-            )
-          );
-        } else {
-          const createdBook = await addWishlist(book);
-          setWishlist((prev) => [createdBook, ...prev]);
-        }
-      } catch (error) {
-        setWishlistErrorMessage(
-          error instanceof Error ? error.message : 'Failed to update wishlist'
+        setLoadingWishlist(true);
+        const response = await getWishlist();
+        setWishlist(response);
+      } catch (wishlistError) {
+        setError(
+          wishlistError instanceof Error
+            ? wishlistError.message
+            : 'Failed to load wishlist'
         );
       } finally {
-        setActiveWishlistBookId(null);
+        setLoadingWishlist(false);
       }
-    },
+    }
+
+    loadWishlist();
+  }, []);
+
+  const wishlistIds = useMemo(
+    () => wishlist.map((book) => book.googleBookId),
     [wishlist]
   );
 
-  return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
+  function handleWishlistCreated(book: Book) {
+    setWishlist((current) => [
+      book,
+      ...current.filter((item) => item.googleBookId !== book.googleBookId),
+    ]);
+  }
 
-        <main className="mx-auto max-w-6xl px-4 py-8">
+  async function handleRemove(book: Book) {
+    try {
+      setDeletingId(book.googleBookId);
+      await removeWishlist(book.googleBookId);
+      setWishlist((current) =>
+        current.filter((item) => item.googleBookId !== book.googleBookId)
+      );
+    } catch (removeError) {
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : 'Failed to remove book'
+      );
+    } finally {
+      setDeletingId('');
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Navbar />
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
+
+        {loadingWishlist ? (
+          <div className="rounded-3xl bg-white p-8 shadow-soft">
+            <p className="text-sm text-slate-500">Loading wishlist...</p>
+          </div>
+        ) : (
           <Routes>
             <Route
               path="/"
               element={
                 <SearchPage
-                  wishlist={wishlist}
-                  onToggleWishlist={handleToggleWishlist}
-                  activeWishlistBookId={activeWishlistBookId}
+                  wishlistIds={wishlistIds}
+                  onWishlistCreated={handleWishlistCreated}
                 />
               }
             />
@@ -90,16 +92,16 @@ export default function App() {
               element={
                 <WishlistPage
                   wishlist={wishlist}
-                  onToggleWishlist={handleToggleWishlist}
-                  activeWishlistBookId={activeWishlistBookId}
-                  isInitialLoading={isInitialLoading}
-                  errorMessage={wishlistErrorMessage}
+                  onRemove={handleRemove}
+                  deletingId={deletingId}
                 />
               }
             />
           </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
+        )}
+      </main>
+    </div>
   );
 }
+
+export default App;

@@ -33,9 +33,9 @@ export async function searchGoogleBooks(query: string): Promise<BookItem[]> {
     throw new Error('Query must contain at least 2 characters');
   }
 
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(trimmedQuery)}&maxResults=40`;
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(trimmedQuery)}&maxResults=40&key=AIzaSyB4MAasHlqFjSrbo92FHHQv_V8VFdEXE5E`;
   const response = await fetch(url);
-
+  console.log('response:', response);
   if (!response.ok) {
     throw new Error('Failed to fetch data from Google Books');
   }

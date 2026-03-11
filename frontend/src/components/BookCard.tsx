@@ -3,71 +3,71 @@ import StarRating from './StarRating';
 
 interface BookCardProps {
   book: Book;
-  isWishlisted?: boolean;
-  onToggleWishlist?: (book: Book) => void;
-  isWishlistLoading?: boolean;
+  isSaved: boolean;
+  actionLabel: string;
+  onAction: (book: Book) => void;
+  actionDisabled?: boolean;
 }
 
 export default function BookCard({
   book,
-  isWishlisted = false,
-  onToggleWishlist,
-  isWishlistLoading = false,
+  isSaved,
+  actionLabel,
+  onAction,
+  actionDisabled = false,
 }: BookCardProps) {
-  const authorText =
-    book.authors.length > 0 ? book.authors.join(', ') : 'Unknown Author';
-
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="aspect-[3/4] w-full bg-slate-100">
-        {book.thumbnail ? (
-          <img
-            src={book.thumbnail}
-            alt={book.title}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center px-4 text-center text-sm text-slate-400">
-            No image available
+    <article className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft sm:grid-cols-[128px,1fr]">
+      <img
+        src={book.thumbnail}
+        alt={book.title}
+        className="h-52 w-full rounded-2xl object-cover sm:h-full sm:w-32"
+        loading="lazy"
+      />
+
+      <div className="flex min-w-0 flex-col">
+        <div className="flex flex-1 flex-col gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-600">
+              {book.publishedDate}
+            </p>
+            <h3 className="mt-1 line-clamp-2 text-xl font-bold text-slate-900">
+              {book.title}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              by {book.authors.join(', ')}
+            </p>
           </div>
-        )}
-      </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <h2 className="line-clamp-2 text-base font-semibold text-slate-900">
-          {book.title}
-        </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <StarRating rating={book.averageRating} />
+            <span className="text-xs text-slate-500">
+              {book.ratingsCount} ratings
+            </span>
+          </div>
 
-        <p className="mt-2 line-clamp-2 text-sm text-slate-600">{authorText}</p>
-
-        <div className="mt-3">
-          <StarRating rating={book.averageRating} />
+          <p className="line-clamp-3 text-sm leading-6 text-slate-600">
+            {book.description}
+          </p>
         </div>
 
-        <p className="mt-2 text-xs text-slate-500">
-          {book.ratingsCount > 0
-            ? `${book.ratingsCount} ratings`
-            : 'No ratings count'}
-        </p>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          {isSaved ? (
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Already in wishlist
+            </span>
+          ) : (
+            <span className="text-xs text-slate-400">
+              Save this book for later reading.
+            </span>
+          )}
 
-        <div className="mt-4">
           <button
             type="button"
-            onClick={() => onToggleWishlist?.(book)}
-            disabled={isWishlistLoading}
-            className={[
-              'w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition',
-              isWishlisted
-                ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
-                : 'bg-slate-900 text-white hover:bg-slate-800',
-              isWishlistLoading ? 'cursor-not-allowed opacity-60' : '',
-            ].join(' ')}>
-            {isWishlistLoading
-              ? 'Please wait...'
-              : isWishlisted
-                ? 'Remove from Wishlist'
-                : 'Add to Wishlist'}
+            onClick={() => onAction(book)}
+            disabled={actionDisabled}
+            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300">
+            {actionLabel}
           </button>
         </div>
       </div>

@@ -1,131 +1,129 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BookCard from '../components/BookCard';
+import EmptyState from '../components/EmptyState';
 import SearchBar from '../components/SearchBar';
+import useDebounce from '../hooks/useDebounce';
 import { searchBooks } from '../services/booksApi';
+import { addWishlist } from '../services/wishlistApi';
 import { Book } from '../types/book';
 
 interface SearchPageProps {
-  wishlist: Book[];
-  onToggleWishlist: (book: Book) => Promise<void>;
-  activeWishlistBookId: string | null;
+  wishlistIds: string[];
+  onWishlistCreated: (book: Book) => void;
 }
 
 export default function SearchPage({
-  wishlist,
-  onToggleWishlist,
-  activeWishlistBookId,
+  wishlistIds,
+  onWishlistCreated,
 }: SearchPageProps) {
   const [query, setQuery] = useState('atomic habits');
   const [books, setBooks] = useState<Book[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [submittingId, setSubmittingId] = useState('');
 
-  async function handleSearch() {
-    const trimmedQuery = query.trim();
+  const debouncedQuery = useDebounce(query, 500);
 
-    if (!trimmedQuery) {
+  useEffect(() => {
+    const normalizedQuery = debouncedQuery.trim();
+
+    if (normalizedQuery.length < 2) {
       setBooks([]);
-      setHasSearched(false);
-      setErrorMessage('');
+      setError('');
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-      setHasSearched(true);
+    async function runSearch() {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await searchBooks(normalizedQuery);
+        setBooks(response);
+      } catch (searchError) {
+        setError(
+          searchError instanceof Error
+            ? searchError.message
+            : 'Failed to load books'
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
 
-      const results = await searchBooks(trimmedQuery);
-      setBooks(results);
-    } catch (error) {
-      setBooks([]);
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Something went wrong'
+    runSearch();
+  }, [debouncedQuery]);
+
+  const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
+
+  async function handleAddWishlist(book: Book) {
+    try {
+      setSubmittingId(book.googleBookId);
+      const savedBook = await addWishlist(book);
+      onWishlistCreated(savedBook);
+    } catch (wishlistError) {
+      setError(
+        wishlistError instanceof Error
+          ? wishlistError.message
+          : 'Failed to save book'
       );
     } finally {
-      setIsLoading(false);
+      setSubmittingId('');
     }
   }
 
-  const wishlistIds = useMemo(
-    () => new Set(wishlist.map((book) => book.googleBookId)),
-    [wishlist]
-  );
-
-  const content = useMemo(() => {
-    if (isLoading) {
-      return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-          Searching books...
-        </div>
-      );
-    }
-
-    if (errorMessage) {
-      return (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700 shadow-sm">
-          {errorMessage}
-        </div>
-      );
-    }
-
-    if (!hasSearched) {
-      return (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-          Start by searching for a book title, author, or keyword.
-        </div>
-      );
-    }
-
-    if (books.length === 0) {
-      return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-          No books found for your search.
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {books.map((book) => (
-          <BookCard
-            key={book.googleBookId}
-            book={book}
-            isWishlisted={wishlistIds.has(book.googleBookId)}
-            isWishlistLoading={activeWishlistBookId === book.googleBookId}
-            onToggleWishlist={onToggleWishlist}
-          />
-        ))}
-      </div>
-    );
-  }, [
-    books,
-    errorMessage,
-    hasSearched,
-    isLoading,
-    wishlistIds,
-    onToggleWishlist,
-    activeWishlistBookId,
-  ]);
-
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Search Books</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Find books from Google Books and save your favorites into wishlist.
-        </p>
+      <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+        <SearchBar value={query} onChange={setQuery} />
+        <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-soft">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
+            Mini Project
+          </p>
+          <h2 className="mt-3 text-2xl font-bold">
+            Search, discover, and save your next favorite book.
+          </h2>
+        </div>
       </div>
 
-      <SearchBar
-        value={query}
-        onChange={setQuery}
-        onSubmit={handleSearch}
-        isLoading={isLoading}
-      />
+      {error && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
 
-      {content}
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-72 animate-pulse rounded-3xl bg-slate-200"
+            />
+          ))}
+        </div>
+      ) : books.length > 0 ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {books.map((book) => (
+            <BookCard
+              key={book.googleBookId}
+              book={book}
+              isSaved={wishlistSet.has(book.googleBookId)}
+              actionLabel={
+                wishlistSet.has(book.googleBookId) ? 'Saved' : 'Add to Wishlist'
+              }
+              onAction={handleAddWishlist}
+              actionDisabled={
+                wishlistSet.has(book.googleBookId) ||
+                submittingId === book.googleBookId
+              }
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="Start searching for a book"
+          description="Type at least 2 characters to see book recommendations from Google Books."
+        />
+      )}
     </section>
   );
 }
