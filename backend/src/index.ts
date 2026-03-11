@@ -4,6 +4,7 @@ import express from 'express';
 import { connectDatabase } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import bookRoutes from './routes/bookRoutes.js';
+import wishlistRoutes from './routes/wishlistRoutes.js';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ const port = Number(process.env.PORT || 3001);
 app.use(express.json());
 
 app.use('/api/books', bookRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 app.use(errorHandler);
 

@@ -10,7 +10,7 @@ export async function getBooksByQuery(
     const query = String(req.query.q || '').trim();
 
     if (!query) {
-      throw new Error('Query parameter "q" is required');
+      res.status(400).json({ message: 'Query parameter "q" is required' });
     }
 
     const books = await searchGoogleBooks(query);
