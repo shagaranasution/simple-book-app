@@ -28,9 +28,6 @@ export default function BookCard({
       <div className="flex min-w-0 flex-col">
         <div className="flex flex-1 flex-col gap-3">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-600">
-              {book.publishedDate}
-            </p>
             <h3 className="mt-1 line-clamp-2 text-xl font-bold text-slate-900">
               {book.title}
             </h3>
