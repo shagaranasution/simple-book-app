@@ -70,3 +70,10 @@ Stop services:
 ```bash
 npm run docker:down
 ```
+
+## Screenshots
+##### Search Page
+[<img src="./screenshots/ss_1.png" width="380px" />](https://raw.githubusercontent.com/shagaranasution/simple-book-app/refs/heads/master/screenshots/ss_1.png)
+
+###### Wishlist Page
+[<img src="./screenshots/ss_2.png" width="380px" />](https://raw.githubusercontent.com/shagaranasution/simple-book-app/refs/heads/master/screenshots/ss_2.png)
