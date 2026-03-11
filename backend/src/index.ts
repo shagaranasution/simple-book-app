@@ -2,6 +2,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import { connectDatabase } from './config/database.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import bookRoutes from './routes/bookRoutes.js';
 
 dotenv.config();
 
@@ -10,9 +12,9 @@ const port = Number(process.env.PORT || 3001);
 
 app.use(express.json());
 
-app.get('/api/health', (_req, res) => {
-  res.json({ message: 'Backend is running' });
-});
+app.use('/api/books', bookRoutes);
+
+app.use(errorHandler);
 
 connectDatabase()
   .then(() => {
