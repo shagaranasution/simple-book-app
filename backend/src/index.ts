@@ -10,7 +10,13 @@ dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT || 3001);
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
+app.use(
+  cors({
+    origin: clientUrl,
+  })
+);
 app.use(express.json());
 
 app.use('/api/books', bookRoutes);
